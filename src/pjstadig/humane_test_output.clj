@@ -26,7 +26,7 @@
        [{:keys [type expected actual diffs message] :as event}]
        (with-test-out
          (inc-report-counter :fail)
-         (println "\nFAIL in" (testing-vars-str event))
+         (println "\033[1;31m\nFAIL in" (testing-vars-str event) "\033[0m")
          (when (seq *testing-contexts*) (println (testing-contexts-str)))
          (when message (println message))
          (binding [*out* (pp/get-pretty-writer *out*)]
@@ -48,6 +48,16 @@
                  (when b
                    (pp/pprint b)))
                (print-expected actual)))))))))
+
+(defmethod report :summary [m]
+  (with-test-out
+   (println "\nRan" (:test m) "tests containing"
+            (+ (:pass m) (:fail m) (:error m)) "assertions.")
+   (let [start-colorize (if (or (pos? (:fail m)) (pos? (:error m)))
+                          "\033[1;31m"  ;; red
+                          "\033[1;32m") ;; green
+         end-colorize "\033[0m"] ;; black
+     (println (str start-colorize (:fail m) " failures, " (:error m) " errors." end-colorize)))))
 
 (defn activate! []
   @activation-body)
